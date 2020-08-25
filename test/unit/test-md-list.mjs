@@ -11,6 +11,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Unordered List', function (t) {
   const input = `
     - First list item

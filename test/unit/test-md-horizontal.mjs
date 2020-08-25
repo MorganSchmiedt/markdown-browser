@@ -11,6 +11,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Horizontal line', function (t) {
   const input = `
     Pre line text

@@ -10,6 +10,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Link', function (t) {
   const input = 'This is a [link](https://example.com)'
   const output = '<p>This is a <a href="https://example.com">link</a></p>'

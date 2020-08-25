@@ -11,6 +11,9 @@ const {
   document,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Element tagName', function (t) {
   const element = document.createElement('p')
 

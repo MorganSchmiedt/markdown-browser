@@ -10,6 +10,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Reference', function (t) {
   const input = 'See reference[^1]'
   const output = '<p>See reference<a href="#reference1"><sup>1</sup></a></p>'

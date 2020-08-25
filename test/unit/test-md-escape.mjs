@@ -10,6 +10,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Escape characters are removed in parsed element', function (t) {
   const input = '- Some \\*text*'
   const opt = {

@@ -11,6 +11,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Quote', function (t) {
   const input = `
     > Blockquote line 1

@@ -9,6 +9,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Text', function (t) {
   const input = 'My name is James Bond'
   const output = '<p>My name is James Bond</p>'

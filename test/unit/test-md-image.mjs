@@ -11,6 +11,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Image as a figure', function (t) {
   const input = '![alt text](https://example.com/image)'
   const output = inlineHtml`

@@ -11,6 +11,9 @@ const {
   test,
 } = lib
 
+// TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
+// DO NOT CHANGE
+
 test('Header', function (t) {
   const input = '# Title 1'
   const output = '<h1>Title 1</h1>'
