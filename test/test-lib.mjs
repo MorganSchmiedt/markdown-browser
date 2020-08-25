@@ -1,4 +1,4 @@
-import parser from '../dist/markdown.mjs'
+import parser from '../src/markdown.mjs'
 import test from 'tape'
 import jsdomImport from 'jsdom'
 
