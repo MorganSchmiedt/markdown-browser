@@ -1,0 +1,22 @@
+{
+  "name": "@deskeen/markdown-browser",
+  "version": "1.0.0",
+  "description": "Deskeen Markdown Parser - Browser version",
+  "author": "Morgan Schmiedt",
+  "license": "MIT",
+  "repository": "https://github.com/deskeen/markdown",
+  "keywords": [
+    "markdown",
+    "parser",
+    "html",
+    "node.js"
+  ],
+  "main": "src/markdown.mjs",
+  "scripts": {
+    "test": "node --experimental-modules test/test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^16.4.0",
+    "tape": "^5.0.1"
+  }
+}
