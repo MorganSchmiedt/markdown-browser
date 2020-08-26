@@ -76,7 +76,7 @@ const attach = function () {
  * @param {function} [opt.onQuote]
  * @param {function} [opt.onReference]
  */
-export const parse = (markdownText, opt = {}) => {
+const parse = (markdownText, opt = {}) => {
   const allowHeader = parseBoolean(opt.allowHeader, true)
   const allowLink = parseBoolean(opt.allowLink, true)
   const allowImage = parseBoolean(opt.allowImage, true)
@@ -417,7 +417,7 @@ export const parse = (markdownText, opt = {}) => {
           const codeContent = match[2]
 
           const codeNode = createElement('CODE')
-          codeNode.textContent = codeContent
+          codeNode.textContent = codeContent.replace(/\\`/g, '`')
 
           const preNode = createElement('PRE')
           preNode.appendChild(codeNode)
