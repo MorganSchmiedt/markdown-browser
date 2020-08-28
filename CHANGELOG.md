@@ -1,5 +1,15 @@
 # Changelog
 
+## 2020-08-28
+
+**🌟 New**
+- Footnotes are implemented.
+- `allowFootnote` option is added and defaults to false.
+
+**🔧 Changes**
+- `allowReference` is removed.
+
+
 ## 2020-08-26
 
 **🌟 New**

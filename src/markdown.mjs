@@ -63,7 +63,7 @@ const attach = function () {
  * @param {boolean} [opt.allowNestedList=true]
  * @param {boolean} [opt.allowHorizontalLine=true]
  * @param {boolean} [opt.allowQuote=true]
- * @param {boolean} [opt.allowReference=true]
+ * @param {boolean} [opt.allowFootnote=true]
  * @param {function} [opt.onHeader]
  * @param {function} [opt.onLink]
  * @param {function} [opt.onImage]
@@ -89,7 +89,7 @@ const parse = (markdownText, opt = {}) => {
   const allowOrdNestedList = parseBoolean(opt.allowOrderedNestedList, true)
   const allowHorizontalLine = parseBoolean(opt.allowHorizontalLine, true)
   const allowQuote = parseBoolean(opt.allowQuote, true)
-  const allowReference = parseBoolean(opt.allowReference, true)
+  const allowFootnote = parseBoolean(opt.allowFootnote, false)
   const maxHeader = parseMaxHeader(opt.maxHeader, 3)
 
   const document = opt.document || window.document
@@ -113,6 +113,8 @@ const parse = (markdownText, opt = {}) => {
   let lastFlushCursor
   let lineCursor
   let lineText
+  const fnNote = {}
+  const fnIdList = []
 
   const flushBody = () => {
     if (currentNode != null) {
@@ -430,6 +432,19 @@ const parse = (markdownText, opt = {}) => {
           ffCursor = matchSize
           parseLine = false
         }
+      } else if (allowFootnote
+      && firstChar === '[') {
+        const match = /^\[\^([\d\w]+)\]: (.+)/.exec(lineText)
+
+        if (match) {
+          flushBody()
+
+          const ref = match[1]
+          const text = match[2]
+
+          fnNote[ref] = text
+          parseLine = false
+        }
       }
 
       if (parseLine) {
@@ -591,20 +606,23 @@ const parse = (markdownText, opt = {}) => {
             } else if (char === '[') {
               const restLineText = lineText.substring(lineCursor + 1)
 
-              if (allowReference
+              if (allowFootnote
               && next(1) === '^') {
-                const refMatch = /\^(\d+)]/.exec(restLineText)
+                const refMatch = /\^([\d\w]+)]/.exec(restLineText)
 
                 if (refMatch) {
                   flush()
 
                   const ref = refMatch[1]
+                  const refNb = fnIdList.length + 1
+
+                  fnIdList.push(ref)
 
                   const supNode = createElement('SUP')
-                  supNode.textContent = ref
+                  supNode.textContent = refNb
 
                   const linkNode = createElement('A')
-                  linkNode.setAttribute('href', `#reference${ref}`)
+                  linkNode.setAttribute('href', `#reference${refNb}`)
                   linkNode.appendChild(supNode)
                   linkNode.onAttach = opt.onReference != null
                     ? node => opt.onReference(node, ref)
@@ -697,6 +715,50 @@ const parse = (markdownText, opt = {}) => {
 
   if (currentNode) {
     flushBody()
+  }
+
+  if (allowFootnote) {
+    const footerNode = document.createElement('section')
+
+    let refNb = 1
+
+    for (const ref of fnIdList) {
+      const refValue = fnNote[ref]
+
+      if (refValue != null) {
+        const refNode = document.createElement('sup')
+        refNode.id = `reference${refNb}`
+        refNode.textContent = refNb
+
+        const contentParsed = parse(refValue, Object.assign({}, opt, {
+          allowHeader: false,
+          allowImage: false,
+          allowMultilineCode: false,
+          allowUnorderedList: false,
+          allowOrderedList: false,
+          allowHorizontalLine: false,
+          allowQuote: false,
+          allowFootnote: false,
+        }))
+
+        const contentNode = contentParsed.firstChild
+
+        const lineNode = document.createElement('p')
+        lineNode.appendChild(refNode)
+
+        // childNodes is theoretically a live NodeList
+        for (const node of Array.from(contentNode.childNodes)) {
+          lineNode.appendChild(node)
+        }
+
+        footerNode.appendChild(lineNode)
+        refNb += 1
+      }
+    }
+
+    if (footerNode.children.length > 0) {
+      body.appendChild(footerNode)
+    }
   }
 
   return body

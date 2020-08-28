@@ -7,24 +7,167 @@ import lib from '../test-lib.mjs'
 const {
   parse,
   parseToHtml,
+  inlineHtml,
   test,
 } = lib
 
 // TESTS MUST BE SYNC WITH THE ONES IN THE NODE.JS REPO
 // DO NOT CHANGE
 
-test('Reference', function (t) {
-  const input = 'See reference[^1]'
-  const output = '<p>See reference<a href="#reference1"><sup>1</sup></a></p>'
+test('Reference with a single ref', function (t) {
+  const input = `
+    See reference[^1]
 
-  t.equal(parseToHtml(input), output, 'Output is valid')
+    [^1]: some text`
+
+  const output = inlineHtml`
+    <p>See reference<a href="#reference1"><sup>1</sup></a></p>
+    <section>
+      <p><sup id="reference1">1</sup>some text</p>
+    </section>`
+
+  const opt = {
+    allowFootnote: true,
+  }
+
+  t.equal(parseToHtml(input, opt), output, 'Output is valid')
+  t.end()
+})
+
+test('Reference with 2 refs', function (t) {
+  const input = `
+    See this[^1] and that[^2]
+
+    [^1]: ref one
+    [^2]: ref two`
+
+  const output = inlineHtml`
+    <p>See this<a href="#reference1"><sup>1</sup></a> and that<a href="#reference2"><sup>2</sup></a></p>
+    <section>
+      <p><sup id="reference1">1</sup>ref one</p>
+      <p><sup id="reference2">2</sup>ref two</p>
+    </section>`
+
+  const opt = {
+    allowFootnote: true,
+  }
+
+  t.equal(parseToHtml(input, opt), output, 'Output is valid')
+  t.end()
+})
+
+test('Reference with 2 refs not in order', function (t) {
+  const input = `
+    See this[^1] and that[^2]
+    [^2]: ref two
+    [^1]: ref one`
+
+  const output = inlineHtml`
+    <p>See this<a href="#reference1"><sup>1</sup></a> and that<a href="#reference2"><sup>2</sup></a></p>
+    <section>
+      <p><sup id="reference1">1</sup>ref one</p>
+      <p><sup id="reference2">2</sup>ref two</p>
+    </section>`
+
+  const opt = {
+    allowFootnote: true,
+  }
+
+  t.equal(parseToHtml(input, opt), output, 'Output is valid')
+  t.end()
+})
+
+test('Reference with text ref', function (t) {
+  const input = `
+    See this[^one] and that[^two]
+
+    [^one]: ref one
+    [^two]: ref two`
+
+  const output = inlineHtml`
+    <p>See this<a href="#reference1"><sup>1</sup></a> and that<a href="#reference2"><sup>2</sup></a></p>
+    <section>
+      <p><sup id="reference1">1</sup>ref one</p>
+      <p><sup id="reference2">2</sup>ref two</p>
+    </section>`
+
+  const opt = {
+    allowFootnote: true,
+  }
+
+  t.equal(parseToHtml(input, opt), output, 'Output is valid')
+  t.end()
+})
+
+test('Reference with missing ref key', function (t) {
+  const input = `
+    See this[^one] and that
+
+    [^one]: ref one
+    [^two]: ref two`
+
+  const output = inlineHtml`
+    <p>See this<a href="#reference1"><sup>1</sup></a> and that</p>
+    <section>
+      <p><sup id="reference1">1</sup>ref one</p>
+    </section>`
+
+  const opt = {
+    allowFootnote: true,
+  }
+
+  t.equal(parseToHtml(input, opt), output, 'Output is valid')
+  t.end()
+})
+
+test('Reference with missing ref text', function (t) {
+  const input = `
+    See this[^one] and that[^two]
+
+    [^one]: ref one`
+
+  const output = inlineHtml`
+    <p>See this<a href="#reference1"><sup>1</sup></a> and that<a href="#reference2"><sup>2</sup></a></p>
+    <section>
+      <p><sup id="reference1">1</sup>ref one</p>
+    </section>`
+
+  const opt = {
+    allowFootnote: true,
+  }
+
+  t.equal(parseToHtml(input, opt), output, 'Output is valid')
+  t.end()
+})
+
+test('Reference with complex texts', function (t) {
+  const input = `
+    See reference[^1]
+
+    [^1]: some *italic* and **bold** and a [link](address)`
+
+  const output = inlineHtml`
+    <p>See reference<a href="#reference1"><sup>1</sup></a></p>
+    <section>
+      <p><sup id="reference1">1</sup>some <em>italic</em> and <strong>bold</strong> and a <a href="address">link</a></p>
+    </section>`
+
+  const opt = {
+    allowFootnote: true,
+  }
+
+  t.equal(parseToHtml(input, opt), output, 'Output is valid')
   t.end()
 })
 
 test('Reference with callback', function (t) {
-  const input = 'See reference[^1]'
+  const input = `
+    See reference[^1]
+
+    [^1]: some text`
+
   const opt = {
-    allowReference: true,
+    allowFootnote: true,
     onReference: node => {
       t.notEqual(node, null, 'Parameter is populated')
       t.equal(node.tagName, 'A', 'Tagname is valid')
@@ -37,8 +180,15 @@ test('Reference with callback', function (t) {
 })
 
 test('Reference with allowReference to false', function (t) {
-  const input = 'See reference[^1]'
-  const output = '<p>See reference[<sup>1</sup>]</p>'
+  const input = `
+    See reference[^1]
+
+    [^1]: some text`
+
+  const output = inlineHtml`
+    <p>See reference[<sup>1</sup>]</p>
+    <p>[<sup>1</sup>]: some text</p>`
+
   const opt = {
     allowReference: false,
   }
