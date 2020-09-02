@@ -36,6 +36,8 @@ const removeEscapeChars = text =>
 const REGEX_MD_TEXT =
   new RegExp(`[${MD_CHARS}]`)
 
+const isSpace = text => /^\s$/.test(text)
+
 const attach = function () {
   for (const child of this.children) {
     if (child._attach) {
@@ -495,69 +497,55 @@ const parse = (markdownText, opt = {}) => {
             if (next(-1) === MD_ESCAPE_CHAR) {
               // Do nothing
             } else if (char === '*') {
-              if (next(1) === '*'
-              && next(2) === '*') {
-                const syntax = '***'
+              // Can not have an em/strong tags in another em/strong tags
+              if (targetNode == null
+                || (targetNode.tagName !== 'EM'
+                  && targetNode.tagName !== 'STRONG')) {
+                const remainingText = lineText.substring(lineCursor)
+                const syntaxMatch = /^(\*{1,3})/.exec(remainingText)
+                const syntax = syntaxMatch[0]
                 const syntaxSize = syntax.length
-                const fromIndex = lineCursor + syntaxSize
-                const endTagIndex =
-                  lineText.substring(fromIndex).indexOf(syntax)
+                const nextChar = remainingText[syntaxSize]
 
-                if (endTagIndex > 0) {
-                  flush()
-                  lineCursorMax = fromIndex + endTagIndex
+                if (isSpace(nextChar) === false) {
+                  const endMatch = /(.+?)(?=\S\*)/
+                    .exec(remainingText.substr(syntaxSize))
 
-                  const emNode = createElement('EM')
-                  emNode.ffOnTextEnd = syntaxSize
-                  emNode.upOnTextEnd = true
+                  if (endMatch) {
+                    const endTagIndex = endMatch[0].length + syntaxSize + 1
 
-                  const strongNode = createElement('STRONG')
-                  strongNode.appendChild(emNode)
+                    flush()
+                    lineCursorMax = lineCursor + endTagIndex
 
-                  targetNode.appendChild(strongNode)
-                  targetNode = emNode
+                    if (syntax === '*') {
+                      const emNode = document.createElement('EM')
+                      emNode.ffOnTextEnd = syntaxSize
 
-                  ff = syntaxSize
-                  lastFlushCursor += syntaxSize
+                      targetNode.appendChild(emNode)
+                      targetNode = emNode
+                    } else if (syntax === '**') {
+                      const strongNode = document.createElement('STRONG')
+                      strongNode.ffOnTextEnd = syntaxSize
+
+                      targetNode.appendChild(strongNode)
+                      targetNode = strongNode
+                    } else {
+                      const emNode = document.createElement('EM')
+                      emNode.ffOnTextEnd = syntaxSize
+                      emNode.upOnTextEnd = true
+
+                      const strongNode = document.createElement('STRONG')
+                      strongNode.appendChild(emNode)
+
+                      targetNode.appendChild(strongNode)
+                      targetNode = emNode
+                    }
+
+                    lastFlushCursor += syntaxSize
+                  }
                 }
-              } else if (next(1) === '*') {
-                const syntax = '**'
-                const syntaxSize = 2
-                const fromIndex = lineCursor + syntaxSize
-                const endTagIndex =
-                  lineText.substring(fromIndex).indexOf(syntax)
 
-                if (endTagIndex > 0) {
-                  flush()
-                  lineCursorMax = fromIndex + endTagIndex
-
-                  const strongNode = createElement('STRONG')
-                  strongNode.ffOnTextEnd = syntaxSize
-
-                  targetNode.appendChild(strongNode)
-                  targetNode = strongNode
-
-                  ff = syntaxSize
-                  lastFlushCursor += syntaxSize
-                }
-              } else {
-                const syntaxSize = 1
-                const fromIndex = lineCursor + syntaxSize
-                const endTagIndex = lineText.substring(fromIndex).indexOf('*')
-
-                if (endTagIndex > 0) {
-                  flush()
-                  lineCursorMax = fromIndex + endTagIndex
-
-                  const emNode = createElement('EM')
-                  emNode.ffOnTextEnd = syntaxSize
-
-                  targetNode.appendChild(emNode)
-                  targetNode = emNode
-
-                  ff = syntaxSize
-                  lastFlushCursor += syntaxSize
-                }
+                ff = syntaxSize
               }
             } else if (char === '~') {
               if (next(1) === '~') {
