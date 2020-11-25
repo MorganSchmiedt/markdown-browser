@@ -402,6 +402,12 @@ const parse = (markdownText, opt = {}) => {
 
             currentNode = quoteNode
             targetNode = pNode
+          } else if (currentNode.tagName === 'BLOCKQUOTE'
+          && lineText.trim().length === 1) {
+            const pNode = createElement('P')
+
+            currentNode.appendChild(pNode)
+            targetNode = pNode
           }
 
           lineCursor = 2
@@ -499,8 +505,8 @@ const parse = (markdownText, opt = {}) => {
             } else if (char === '*') {
               // Can not have an em/strong tags in another em/strong tags
               if (targetNode == null
-                || (targetNode.tagName !== 'EM'
-                  && targetNode.tagName !== 'STRONG')) {
+              || (targetNode.tagName !== 'EM'
+                && targetNode.tagName !== 'STRONG')) {
                 const remainingText = lineText.substring(lineCursor)
                 const syntaxMatch = /^(\*{1,3})/.exec(remainingText)
                 const syntax = syntaxMatch[0]
@@ -518,23 +524,23 @@ const parse = (markdownText, opt = {}) => {
                     lineCursorMax = lineCursor + endTagIndex
 
                     if (syntax === '*') {
-                      const emNode = document.createElement('EM')
+                      const emNode = createElement('EM')
                       emNode.ffOnTextEnd = syntaxSize
 
                       targetNode.appendChild(emNode)
                       targetNode = emNode
                     } else if (syntax === '**') {
-                      const strongNode = document.createElement('STRONG')
+                      const strongNode = createElement('STRONG')
                       strongNode.ffOnTextEnd = syntaxSize
 
                       targetNode.appendChild(strongNode)
                       targetNode = strongNode
                     } else {
-                      const emNode = document.createElement('EM')
+                      const emNode = createElement('EM')
                       emNode.ffOnTextEnd = syntaxSize
                       emNode.upOnTextEnd = true
 
-                      const strongNode = document.createElement('STRONG')
+                      const strongNode = createElement('STRONG')
                       strongNode.appendChild(emNode)
 
                       targetNode.appendChild(strongNode)
@@ -706,7 +712,7 @@ const parse = (markdownText, opt = {}) => {
   }
 
   if (allowFootnote) {
-    const footerNode = document.createElement('section')
+    const listNode = createElement('ol')
 
     let refNb = 1
 
@@ -714,10 +720,6 @@ const parse = (markdownText, opt = {}) => {
       const refValue = fnNote[ref]
 
       if (refValue != null) {
-        const refNode = document.createElement('sup')
-        refNode.id = `reference${refNb}`
-        refNode.textContent = refNb
-
         const contentParsed = parse(refValue, Object.assign({}, opt, {
           allowHeader: false,
           allowImage: false,
@@ -731,20 +733,23 @@ const parse = (markdownText, opt = {}) => {
 
         const contentNode = contentParsed.firstChild
 
-        const lineNode = document.createElement('p')
-        lineNode.appendChild(refNode)
+        const itemNode = createElement('li')
+        itemNode.id = `reference${refNb}`
 
         // childNodes is theoretically a live NodeList
         for (const node of Array.from(contentNode.childNodes)) {
-          lineNode.appendChild(node)
+          itemNode.appendChild(node)
         }
 
-        footerNode.appendChild(lineNode)
+        listNode.appendChild(itemNode)
         refNb += 1
       }
     }
 
-    if (footerNode.children.length > 0) {
+    if (listNode.children.length > 0) {
+      const footerNode = createElement('section')
+      footerNode.appendChild(listNode)
+
       body.appendChild(footerNode)
     }
   }

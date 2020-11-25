@@ -1,9 +1,11 @@
 # Changelog
 
-## TBD
+## 2020-11-25
 
-**🌟 New**
+**🔧 Changes**
 - Bold/Italic texts can not start/end with a space.
+- Footnotes are now embedded in a `ol` tag.
+- An empty line `>_` within a quote creates a new paragraph.
 
 
 ## 2020-08-28

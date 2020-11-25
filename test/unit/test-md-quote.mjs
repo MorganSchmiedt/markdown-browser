@@ -5,6 +5,7 @@ export default {}
 import lib from '../test-lib.mjs'
 
 const {
+  parseRaw,
   parse,
   parseToHtml,
   inlineHtml,
@@ -28,6 +29,22 @@ test('Quote', function (t) {
     </blockquote>`
 
   t.equal(parseToHtml(input), output, 'Output is valid')
+  t.end()
+})
+
+test('Quote with two lines', function (t) {
+  const input = '> Blockquote line 1\n> \n> Blockquote line 2'
+  const output = inlineHtml`
+    <blockquote>
+      <p>
+        Blockquote line 1
+      </p>
+      <p>
+        Blockquote line 2
+      </p>
+    </blockquote>`
+
+  t.equal(parseRaw(input).innerHTML, output, 'Output is valid')
   t.end()
 })
 

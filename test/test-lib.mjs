@@ -31,12 +31,18 @@ const parse = (input, opt) =>
     document,
   }, opt))
 
+const parseRaw = (input, opt) =>
+  parser.parse(input, Object.assign({
+    document,
+  }, opt))
+
 const parseToHtml = (input, opt) =>
   parse(input, opt).innerHTML
 
 export default {
   parser,
   parse,
+  parseRaw,
   parseToHtml,
   inlineHtml,
   test,
