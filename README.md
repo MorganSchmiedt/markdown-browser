@@ -2,7 +2,7 @@
 <a href="README.md"><img src="./img/gb.svg" height="16px"></a>
 <a href="README.fr.md"><img src="./img/fr.svg" height="16px"></a>
 
-This Markdown-to-HTML parser is the Browser version of the Node.js parser available here: [@deskeen/markdown](https://github.com/deskeen/markdown)
+This Markdown-to-HTML parser is the browser version of the Node.js parser available here: [@deskeen/markdown](https://github.com/deskeen/markdown)
 
 
 ## Usage
@@ -10,7 +10,7 @@ This Markdown-to-HTML parser is the Browser version of the Node.js parser availa
 Download the module from the `dist/` directory and add it to your project. You can then import it and use it:
 
 ```javascript
-import parser from '{PATH}/markdown.min.js'
+import parser from '{PATH}/markdown.min.mjs'
 
 const html = parser.parse('some markdown text').innerHTML
 
@@ -19,16 +19,14 @@ const html = parser.parse('some markdown text').innerHTML
 
 ## Learn more
 
-Please check out the Node.js version repo for more informations: [@deskeen/markdown](https://github.com/deskeen/markdown)
-
-You can find there the full list of the supported and unsupported Markdown syntaxes, an easy-to-read cheatsheet, a compatibility table with other popular markdown syntaxes and plenty of examples.
+For information on: [@deskeen/markdown](https://github.com/deskeen/markdown)
 
 
 ### Differences with the Node.js version
 
-The parser returns an standard [HTMLElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement).
+The parser returns a standard [HTMLElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement).
 
-Also, new elements can be created by using the standard DOM functions: [document.createElement](https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement) and [document.createTextNode](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode).
+New elements can be created using the standard DOM functions: [document.createElement](https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement) and [document.createTextNode](https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode).
 
 
 ## Contact
