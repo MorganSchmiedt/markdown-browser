@@ -38,6 +38,26 @@ const REGEX_MD_TEXT =
 
 const isSpace = text => /^\s$/.test(text)
 
+const setHTMLAttributes = (node, attrs) => {
+  let cursor = 0
+
+  while (cursor < attrs.length) {
+    const attr = attrs.substring(cursor)
+    const match = /^([^=]+)=(?:"([^"]+)"|([^;]+))?/
+      .exec(attr)
+
+    if (match == null) {
+      return
+    }
+
+    const attrName = match[1]
+    const attrValue = match[2] || match[3]
+
+    node.setAttribute(attrName, attrValue)
+    cursor += (match[0].length + 1)
+  }
+}
+
 const attach = function () {
   for (const child of this.children) {
     if (child._attach) {
@@ -57,7 +77,7 @@ const attach = function () {
  * @param {boolean} [opt.allowHeader=true]
  * @param {boolean} [opt.allowLink=true]
  * @param {boolean} [opt.allowImage=true]
- * @param {boolean} [opt.allowImageStyle=false]
+ * @param {boolean} [opt.allowHTMLAttributes=false]
  * @param {boolean} [opt.allowCode=true]
  * @param {boolean} [opt.allowMultilineCode=true]
  * @param {boolean} [opt.allowUnorderedList=true]
@@ -82,7 +102,6 @@ const parse = (markdownText, opt = {}) => {
   const allowHeader = parseBoolean(opt.allowHeader, true)
   const allowLink = parseBoolean(opt.allowLink, true)
   const allowImage = parseBoolean(opt.allowImage, true)
-  const allowImageStyle = parseBoolean(opt.allowImageStyle, false)
   const allowCode = parseBoolean(opt.allowCode, true)
   const allowMultilineCode = parseBoolean(opt.allowMultilineCode, true)
   const allowUnorderedList = parseBoolean(opt.allowUnorderedList, true)
@@ -92,6 +111,7 @@ const parse = (markdownText, opt = {}) => {
   const allowHorizontalLine = parseBoolean(opt.allowHorizontalLine, true)
   const allowQuote = parseBoolean(opt.allowQuote, true)
   const allowFootnote = parseBoolean(opt.allowFootnote, false)
+  const allowHTMLAttributes = parseBoolean(opt.allowHTMLAttributes, false)
   const maxHeader = parseMaxHeader(opt.maxHeader, 3)
 
   const document = opt.document || window.document
@@ -116,7 +136,8 @@ const parse = (markdownText, opt = {}) => {
   let lineCursor
   let lineText
   const fnNote = {}
-  const fnIdList = []
+  const fnIdList = new Set()
+  const fnIdNb = new Map()
 
   const flushBody = () => {
     if (currentNode != null) {
@@ -192,25 +213,34 @@ const parse = (markdownText, opt = {}) => {
         if (next(1) === '['
         && allowImage) {
           const restLineText = lineText.substring(lineCursor + 1)
-          const endMatch = /^\[([^\]]+)]\(([^;)]+)(;([^)]+))?\)$/
+          const endMatch = /^\[([^\]]+)]\(([^;)]+)\)(?:{([^}]+)})?$/
             .exec(restLineText)
 
           if (endMatch) {
             flushBody()
             const title = endMatch[1]
             const url = endMatch[2]
-            const style = endMatch[4]
+            const attrs = endMatch[3]
 
             const figureNode = createElement('FIGURE')
 
-            if (allowImageStyle
-            && style != null) {
-              figureNode.setAttribute('style', style)
+            if (allowHTMLAttributes
+            && attrs != null) {
+              setHTMLAttributes(figureNode, attrs)
             }
 
-            const isVideo = url.endsWith('.mp4')
+            if (url.endsWith('.mp3')) {
+              const sourceNode = createElement('SOURCE')
+              sourceNode.setAttribute('src', url)
+              sourceNode.setAttribute('type', 'audio/mpeg')
 
-            if (isVideo) {
+              const audioNode = createElement('AUDIO')
+              audioNode.appendChild(sourceNode)
+              audioNode.setAttribute('controls', '')
+              audioNode.onAttach = opt.onAudio
+
+              figureNode.appendChild(audioNode)
+            } else if (url.endsWith('.mp4')) {
               const sourceNode = createElement('SOURCE')
               sourceNode.setAttribute('src', url)
               sourceNode.setAttribute('type', 'video/mp4')
@@ -329,6 +359,7 @@ const parse = (markdownText, opt = {}) => {
           caseFound = true
         } else if (isNewItem === false
         && targetNode != null
+        && targetNode.parentNode != null
         && targetNode.parentNode.tagName === 'OL'
         && spaceCount >= 3) {
           if (targetNode.tagName === 'LI') {
@@ -607,10 +638,16 @@ const parse = (markdownText, opt = {}) => {
                 if (refMatch) {
                   flush()
 
-                  const ref = refMatch[1]
-                  const refNb = fnIdList.length + 1
+                  const id = refMatch[1]
+                  let refNb
 
-                  fnIdList.push(ref)
+                  if (fnIdList.has(id) === false) {
+                    fnIdList.add(id)
+                    refNb = fnIdList.size
+                    fnIdNb.set(id, refNb)
+                  } else {
+                    refNb = fnIdNb.get(id)
+                  }
 
                   const supNode = createElement('SUP')
                   supNode.textContent = refNb
@@ -619,7 +656,7 @@ const parse = (markdownText, opt = {}) => {
                   linkNode.setAttribute('href', `#reference${refNb}`)
                   linkNode.appendChild(supNode)
                   linkNode.onAttach = opt.onReference != null
-                    ? node => opt.onReference(node, ref)
+                    ? node => opt.onReference(node, id)
                     : undefined
 
                   targetNode.appendChild(linkNode)
@@ -651,7 +688,7 @@ const parse = (markdownText, opt = {}) => {
             && next(1) === '[') {
               if (allowImage) {
                 const restLineText = lineText.substring(lineCursor + 1)
-                const endMatch = /^\[([^\]]+)]\(([^;)]+)\)({([^}]+)})?/
+                const endMatch = /^\[([^\]]+)]\(([^;)]+)\)(?:{([^}]+)})?/
                   .exec(restLineText)
 
                 if (endMatch) {
@@ -660,16 +697,16 @@ const parse = (markdownText, opt = {}) => {
                   const syntaxSize = 1 + endMatch[0].length
                   const altText = endMatch[1]
                   const url = endMatch[2]
-                  const style = endMatch[4]
+                  const attrs = endMatch[3]
 
                   const imageNode = createElement('IMG')
                   imageNode.onAttach = opt.onImage
                   imageNode.setAttribute('src', url)
                   imageNode.setAttribute('alt', altText)
 
-                  if (allowImageStyle
-                  && style != null) {
-                    imageNode.setAttribute('style', style)
+                  if (allowHTMLAttributes
+                  && attrs != null) {
+                    setHTMLAttributes(imageNode, attrs)
                   }
 
                   targetNode.appendChild(imageNode)
@@ -716,7 +753,7 @@ const parse = (markdownText, opt = {}) => {
 
     let refNb = 1
 
-    for (const ref of fnIdList) {
+    for (const ref of fnIdList.keys()) {
       const refValue = fnNote[ref]
 
       if (refValue != null) {
